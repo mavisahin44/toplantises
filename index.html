@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Transkript — Sesden Yazıya</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --surface2: #22222e;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0eff8;
+    --muted: #8885a8;
+    --accent: #7c6ef5;
+    --accent2: #a89cf5;
+    --green: #4ade80;
+    --green-bg: rgba(74,222,128,0.12);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.12);
+    --blue: #60a5fa;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* header */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .logo svg { color: var(--accent); }
+  .badge-browser {
+    font-size: 11px;
+    background: rgba(124,110,245,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(124,110,245,0.25);
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  /* main layout */
+  .main {
+    flex: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    width: 100%;
+  }
+
+  /* upload */
+  .drop-zone {
+    border: 2px dashed var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--surface);
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.drag { border-color: var(--accent); background: rgba(124,110,245,0.05); }
+  .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .drop-icon {
+    width: 56px; height: 56px;
+    background: rgba(124,110,245,0.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    color: var(--accent);
+  }
+  .drop-zone h2 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  .drop-zone p { color: var(--muted); font-size: 13px; }
+  .drop-zone .formats { margin-top: 12px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .fmt-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* file card */
+  .file-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .file-icon {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .file-icon.video { background: rgba(96,165,250,0.15); }
+  .file-icon.audio { background: rgba(74,222,128,0.12); }
+  .file-meta { flex: 1; min-width: 0; }
+  .file-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-size { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .remove-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 4px; border-radius: 6px; line-height: 1; }
+  .remove-btn:hover { color: var(--red); background: var(--red-bg); }
+
+  video { width: 100%; border-radius: var(--radius); margin-bottom: 20px; display: none; max-height: 240px; background: #000; }
+
+  /* controls bar */
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  select {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 9px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238885a8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6a5edf; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary { background: var(--surface); border: 1px solid var(--border2); color: var(--text); }
+  .btn-secondary:hover { background: var(--surface2); }
+  .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-green { background: var(--green-bg); border: 1px solid rgba(74,222,128,0.3); color: var(--green); }
+  .btn-green:hover { background: rgba(74,222,128,0.2); }
+  .btn-green:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* progress */
+  .progress-wrap { margin-bottom: 20px; display: none; }
+  .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
+  .progress-label { color: var(--muted); }
+  .progress-pct { color: var(--accent2); font-weight: 600; }
+  .bar-bg { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.4s ease; width: 0%; }
+
+  /* transcript */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 20px;
+    display: none;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-title { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .live-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+  .panel-actions { display: flex; gap: 6px; }
+  .icon-btn {
+    width: 30px; height: 30px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--border2); }
+  textarea {
+    width: 100%;
+    min-height: 260px;
+    padding: 16px;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.75;
+    resize: vertical;
+    font-family: inherit;
+  }
+  textarea:focus { outline: none; }
+  textarea::placeholder { color: var(--muted); }
+
+  /* stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .stat-val { font-size: 22px; font-weight: 700; color: var(--text); }
+
+  /* error */
+  .error-msg {
+    background: var(--red-bg);
+    border: 1px solid rgba(248,113,113,0.25);
+    color: var(--red);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* info box */
+  .info-box {
+    background: rgba(124,110,245,0.08);
+    border: 1px solid rgba(124,110,245,0.2);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+  .info-box strong { color: var(--accent2); }
+
+  /* speaker card */
+  .speaker-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+  }
+  .speaker-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .speaker-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    user-select: none;
+  }
+  .stoggle-wrap { position: relative; width: 36px; height: 20px; }
+  .stoggle-wrap input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; margin: 0; z-index: 1; }
+  .stoggle-track {
+    position: absolute; inset: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .stoggle-wrap input:checked ~ .stoggle-track { background: var(--accent); border-color: var(--accent); }
+  .stoggle-knob {
+    position: absolute; top: 2px; left: 2px;
+    width: 14px; height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    pointer-events: none;
+  }
+  .stoggle-wrap input:checked ~ .stoggle-track .stoggle-knob { transform: translateX(16px); }
+  .speaker-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(124,110,245,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(124,110,245,0.3);
+    border-radius: 4px;
+    padding: 1px 6px;
+    letter-spacing: 0.05em;
+  }
+  .speaker-count-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .speaker-count-wrap select { padding: 5px 24px 5px 8px; font-size: 12px; }
+  .claude-key-row {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .claude-key-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .claude-key-header svg { color: var(--accent2); flex-shrink: 0; }
+
+  /* speaker formatted transcript */
+  .transcript-formatted {
+    padding: 16px;
+    min-height: 260px;
+    line-height: 1.8;
+    font-size: 14px;
+    display: none;
+  }
+  .speaker-block { margin-bottom: 14px; }
+  .speaker-name {
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .sp-color-0 { color: #7c6ef5; background: rgba(124,110,245,0.1); }
+  .sp-color-1 { color: #4ade80; background: rgba(74,222,128,0.1); }
+  .sp-color-2 { color: #60a5fa; background: rgba(96,165,250,0.1); }
+  .sp-color-3 { color: #f87171; background: rgba(248,113,113,0.1); }
+  .sp-color-4 { color: #fbbf24; background: rgba(251,191,36,0.1); }
+  .speaker-text { color: var(--text); padding-left: 8px; }
+
+  /* api key card */
+  .api-key-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }
+  .api-key-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .api-key-header svg { color: var(--accent2); flex-shrink: 0; }
+  .key-status {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .api-key-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .api-key-row input[type=password],
+  .api-key-row input[type=text] {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.05em;
+    outline: none;
+  }
+  .api-key-row input:focus { border-color: var(--accent); }
+  .key-toggle {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .key-toggle:hover { border-color: var(--border2); color: var(--text); }
+  .api-key-hint {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .api-key-hint a { color: var(--accent2); text-decoration: none; }
+  .api-key-hint a:hover { text-decoration: underline; }
+
+  /* footer */
+  footer {
+    text-align: center;
+    padding: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 580px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .topbar { padding: 12px 16px; }
+    .main { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <rect x="1" y="4" width="20" height="15" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M8.5 9l5 3-5 3V9z" fill="currentColor"/>
+    </svg>
+    Video Transkript
+  </div>
+  <span class="badge-browser">Groq Whisper — Ücretsiz & Hızlı</span>
+</div>
+
+<div class="main">
+
+  <div class="info-box">
+    <strong>Nasıl kullanılır:</strong> Groq API anahtarınızı girin → dosya seçin → dil seçin → <em>Metne Çevir</em>'e tıklayın.<br>
+    MP3/WAV/MP4 dosyaları <strong>doğrudan Groq Whisper'a</strong> gönderilir — mikrofon kullanılmaz, <strong>ücretsizdir</strong>. 25 MB üzeri dosyalar otomatik parçalanır.
+  </div>
+
+  <div class="api-key-card" id="apiKeyCard">
+    <div class="api-key-header">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11 1a4 4 0 014 4 4 4 0 01-4 4 4 4 0 01-3.86-3H2l-1 1-1-1 1-1H1V4h1l1-1h5.14A4 4 0 0111 1zm0 2a2 2 0 100 4 2 2 0 000-4z" fill="currentColor"/></svg>
+      <span>Groq API Anahtarı <span style="font-weight:400;color:var(--green);font-size:11px;">— Ücretsiz</span></span>
+      <span class="key-status" id="keyStatus">API anahtarı girilmedi</span>
+    </div>
+    <div class="api-key-row">
+      <input type="password" id="apiKeyInput" placeholder="gsk_..." autocomplete="off" spellcheck="false">
+      <button class="key-toggle" id="apiKeyToggle" title="Göster/Gizle">👁</button>
+      <button class="btn-primary" id="saveKeyBtn" style="padding:8px 14px;font-size:12px;">Kaydet</button>
+    </div>
+    <div class="api-key-hint">Anahtar yalnızca tarayıcınızda saklanır. <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com'dan ücretsiz al →</a></div>
+  </div>
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept="video/*,audio/*">
+    <div class="drop-icon">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <path d="M13 3v14M7 11l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 20h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h2>Video veya ses dosyasını buraya sürükleyin</h2>
+    <p>ya da tıklayarak seçin · Maks 500 MB</p>
+    <div class="formats">
+      <span class="fmt-pill">MP4</span><span class="fmt-pill">MOV</span><span class="fmt-pill">AVI</span>
+      <span class="fmt-pill">MKV</span><span class="fmt-pill">MP3</span><span class="fmt-pill">WAV</span>
+      <span class="fmt-pill">M4A</span><span class="fmt-pill">OGG</span><span class="fmt-pill">WEBM</span>
+    </div>
+  </div>
+
+  <div class="error-msg" id="errorMsg">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span id="errorText"></span>
+  </div>
+
+  <div class="file-card" id="fileCard">
+    <div class="file-icon" id="fileIcon">🎬</div>
+    <div class="file-meta">
+      <div class="file-name" id="fileName"></div>
+      <div class="file-size" id="fileSize"></div>
+    </div>
+    <button class="remove-btn" id="removeBtn" title="Kaldır">✕</button>
+  </div>
+
+  <video id="videoPreview" controls></video>
+
+  <!-- Konuşmacı ayırma seçenekleri -->
+  <div class="speaker-card" id="speakerCard">
+    <div class="speaker-row">
+      <label class="speaker-toggle-label">
+        <div class="stoggle-wrap">
+          <input type="checkbox" id="speakerMode">
+          <span class="stoggle-track"><span class="stoggle-knob"></span></span>
+        </div>
+        <span>Konuşmacıları ayır</span>
+        <span class="speaker-badge">AI · Ücretsiz</span>
+      </label>
+      <div class="speaker-count-wrap" id="speakerCountWrap" style="display:none">
+        <span class="speaker-count-label">Konuşmacı sayısı:</span>
+        <select id="speakerCount">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="auto" selected>Otomatik</option>
+        </select>
+      </div>
+    </div>
+    <div class="api-key-hint" style="margin-top:8px;font-size:11px;">Groq anahtarınızla çalışır — ek anahtar gerekmez · <strong style="color:var(--accent2)">llama-3.3-70b</strong> kullanılır</div>
+  </div>
+
+  <div class="controls">
+    <select id="langSelect">
+      <option value="tr-TR">🇹🇷  Türkçe</option>
+      <option value="en-US">🇺🇸  İngilizce (ABD)</option>
+      <option value="en-GB">🇬🇧  İngilizce (UK)</option>
+      <option value="de-DE">🇩🇪  Almanca</option>
+      <option value="fr-FR">🇫🇷  Fransızca</option>
+      <option value="es-ES">🇪🇸  İspanyolca</option>
+      <option value="ar-SA">🇸🇦  Arapça</option>
+      <option value="ru-RU">🇷🇺  Rusça</option>
+      <option value="ja-JP">🇯🇵  Japonca</option>
+      <option value="zh-CN">🇨🇳  Çince</option>
+    </select>
+    <button class="btn-primary" id="transcribeBtn" disabled>
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 7.5h5M7.5 5v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Metne Çevir
+    </button>
+    <button class="btn-secondary" id="stopBtn" disabled style="display:none">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="3" width="8" height="8" rx="1" fill="currentColor"/></svg>
+      Durdur
+    </button>
+    <button class="btn-green" id="downloadBtn" disabled>
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v8M4 7l3.5 3.5L11 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Word İndir
+    </button>
+    <button class="btn-secondary" id="downloadTxtBtn" disabled>
+      TXT İndir
+    </button>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-header">
+      <span class="progress-label" id="progressLabel">Hazırlanıyor...</span>
+      <span class="progress-pct" id="progressPct">0%</span>
+    </div>
+    <div class="bar-bg"><div class="bar-fill" id="barFill"></div></div>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span id="liveDotWrap"></span>
+        Transkript
+      </div>
+      <div class="panel-actions">
+        <button class="icon-btn" id="copyBtn" title="Kopyala">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="4" y="4" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 10V2a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </button>
+        <button class="icon-btn" id="clearBtn" title="Temizle">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <textarea id="transcript" placeholder="Transkript burada görünecek..."></textarea>
+    <div class="transcript-formatted" id="transcriptFormatted"></div>
+  </div>
+
+  <div class="stats-grid" id="statsGrid" style="display:none">
+    <div class="stat-card"><div class="stat-label">Kelime</div><div class="stat-val" id="wc">0</div></div>
+    <div class="stat-card"><div class="stat-label">Karakter</div><div class="stat-val" id="cc">0</div></div>
+    <div class="stat-card"><div class="stat-label">Satır</div><div class="stat-val" id="lc">0</div></div>
+    <div class="stat-card"><div class="stat-label">Tahmini süre (dk)</div><div class="stat-val" id="dur">–</div></div>
+  </div>
+
+</div>
+
+<footer>Video Transkript · Tarayıcı tabanlı · Verileriniz cihazınızdan çıkmaz</footer>
+
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileCard = document.getElementById('fileCard');
+const fileIcon = document.getElementById('fileIcon');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const removeBtn = document.getElementById('removeBtn');
+const transcribeBtn = document.getElementById('transcribeBtn');
+const stopBtn = document.getElementById('stopBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const downloadTxtBtn = document.getElementById('downloadTxtBtn');
+const progressWrap = document.getElementById('progressWrap');
+const progressLabel = document.getElementById('progressLabel');
+const progressPct = document.getElementById('progressPct');
+const barFill = document.getElementById('barFill');
+const panel = document.getElementById('panel');
+const transcriptEl = document.getElementById('transcript');
+const statsGrid = document.getElementById('statsGrid');
+const errorMsg = document.getElementById('errorMsg');
+const errorText = document.getElementById('errorText');
+const videoPreview = document.getElementById('videoPreview');
+const liveDotWrap = document.getElementById('liveDotWrap');
+const copyBtn = document.getElementById('copyBtn');
+const clearBtn = document.getElementById('clearBtn');
+const wc = document.getElementById('wc');
+const cc = document.getElementById('cc');
+const lc = document.getElementById('lc');
+const dur = document.getElementById('dur');
+
+let currentFile = null;
+let isRunning = false;
+let finalText = '';
+let videoDuration = 0;
+let abortController = null;
+
+// ── API Key yönetimi ──────────────────────────────────────────────
+const apiKeyInput = document.getElementById('apiKeyInput');
+const apiKeyToggle = document.getElementById('apiKeyToggle');
+const saveKeyBtn = document.getElementById('saveKeyBtn');
+const keyStatus = document.getElementById('keyStatus');
+
+function loadSavedKey() {
+  const k = localStorage.getItem('groq_whisper_key') || '';
+  apiKeyInput.value = k;
+  updateKeyStatus(k);
+}
+function updateKeyStatus(k) {
+  if (k && k.startsWith('gsk_')) {
+    keyStatus.textContent = '✓ Groq anahtarı kayıtlı';
+    keyStatus.style.color = 'var(--green)';
+  } else if (k && k.length > 10) {
+    keyStatus.textContent = '✓ API anahtarı kayıtlı';
+    keyStatus.style.color = 'var(--green)';
+  } else {
+    keyStatus.textContent = 'API anahtarı girilmedi';
+    keyStatus.style.color = 'var(--muted)';
+  }
+}
+apiKeyToggle.addEventListener('click', () => {
+  apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
+  apiKeyToggle.textContent = apiKeyInput.type === 'password' ? '👁' : '🙈';
+});
+saveKeyBtn.addEventListener('click', () => {
+  const k = apiKeyInput.value.trim();
+  localStorage.setItem('groq_whisper_key', k);
+  updateKeyStatus(k);
+  saveKeyBtn.textContent = 'Kaydedildi ✓';
+  setTimeout(() => saveKeyBtn.textContent = 'Kaydet', 2000);
+});
+loadSavedKey();
+
+// ── Konuşmacı toggle ─────────────────────────────────────────────
+const speakerModeChk   = document.getElementById('speakerMode');
+const speakerCountWrap = document.getElementById('speakerCountWrap');
+const transcriptFormatted = document.getElementById('transcriptFormatted');
+
+speakerModeChk.addEventListener('change', () => {
+  speakerCountWrap.style.display = speakerModeChk.checked ? 'flex' : 'none';
+});
+
+// ── Konuşmacı ayrımı (Groq llama-3.3-70b — ücretsiz) ────────────
+const SPEAKER_COLORS = ['sp-color-0','sp-color-1','sp-color-2','sp-color-3','sp-color-4'];
+
+async function diarizeWithGroq(rawText, groqKey, speakerCount) {
+  setProgress(88, 'Konuşmacılar ayırılıyor (Groq LLaMA)…');
+  const countHint = speakerCount === 'auto'
+    ? 'Kaç konuşmacı olduğunu metinden kendiliğinden belirle.'
+    : `Toplam ${speakerCount} konuşmacı var.`;
+
+  const prompt = `Aşağıdaki ham transkripti konuşmacılara göre ayır. ${countHint}
+
+Kurallar:
+- Konuşmacılara sırasıyla "Konuşmacı 1", "Konuşmacı 2" vb. isimler ver (metinde isim geçiyorsa onu kullan)
+- Her konuşmacı değişimini yeni satıra yaz
+- Format kesinlikle şu şekilde olsun: KONUŞMACI ADI: söylediği metin
+- Cümle ortasında bölme, mantıklı kesim noktaları seç
+- Başka hiçbir açıklama, not veya ek metin ekleme — sadece formatlanmış transkripti döndür
+
+Ham transkript:
+${rawText}`;
+
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + groqKey
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 8192,
+      temperature: 0.2,
+      messages: [{ role: 'user', content: prompt }]
+    }),
+    signal: abortController.signal
+  });
+
+  if (!resp.ok) {
+    const err = await resp.text();
+    let msg = `Groq LLM hatası (${resp.status})`;
+    try { msg = JSON.parse(err).error?.message || msg; } catch(e) {}
+    throw new Error(msg);
+  }
+  const data = await resp.json();
+  return data.choices?.[0]?.message?.content || rawText;
+}
+
+function renderSpeakerTranscript(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  const colorMap = {};
+  let colorIdx = 0;
+  let html = '';
+
+  for (const line of lines) {
+    const m = line.match(/^([^:：]{1,50})[：:]\s*(.+)/);
+    if (m) {
+      const name = m[1].trim();
+      const speech = m[2].trim();
+      if (!(name in colorMap)) {
+        colorMap[name] = SPEAKER_COLORS[colorIdx % SPEAKER_COLORS.length];
+        colorIdx++;
+      }
+      html += `<div class="speaker-block">
+        <div class="speaker-name ${colorMap[name]}">${name}</div>
+        <div class="speaker-text">${speech}</div>
+      </div>`;
+    } else if (line.trim()) {
+      html += `<div class="speaker-block"><div class="speaker-text">${line.trim()}</div></div>`;
+    }
+  }
+  transcriptFormatted.innerHTML = html;
+  transcriptFormatted.style.display = 'block';
+  transcriptEl.style.display = 'none';
+}
+// ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────
+
+function fmt(n) { return n < 1048576 ? (n/1024).toFixed(1)+' KB' : (n/1048576).toFixed(1)+' MB'; }
+
+function showError(msg) {
+  errorText.textContent = msg;
+  errorMsg.style.display = 'flex';
+  setTimeout(() => errorMsg.style.display = 'none', 10000);
+}
+
+function updateStats(text) {
+  const w = text.trim() ? text.trim().split(/\s+/).length : 0;
+  wc.textContent = w.toLocaleString('tr-TR');
+  cc.textContent = text.length.toLocaleString('tr-TR');
+  lc.textContent = (text.trim() ? text.trim().split('\n').length : 0).toLocaleString('tr-TR');
+  if (videoDuration > 0) dur.textContent = (videoDuration / 60).toFixed(1);
+  if (text.trim()) statsGrid.style.display = 'grid';
+}
+
+function setProgress(pct, label) {
+  barFill.style.width = pct + '%';
+  progressLabel.textContent = label;
+  progressPct.textContent = Math.round(pct) + '%';
+}
+
+function handleFile(file) {
+  if (!file) return;
+  const isVideo = file.type.startsWith('video/');
+  const isAudio = file.type.startsWith('audio/');
+  if (!isVideo && !isAudio) { showError('Geçersiz dosya türü. Video veya ses dosyası seçin.'); return; }
+  // Whisper max 25 MB — büyükse uyar ama engelleme
+  if (file.size > 500 * 1024 * 1024) { showError('Dosya 500 MB sınırını aşıyor.'); return; }
+  currentFile = file;
+  fileIcon.textContent = isVideo ? '🎬' : '🎵';
+  fileIcon.className = 'file-icon ' + (isVideo ? 'video' : 'audio');
+  fileName.textContent = file.name;
+  fileSize.textContent = fmt(file.size);
+  fileCard.style.display = 'flex';
+  transcribeBtn.disabled = false;
+  downloadBtn.disabled = true;
+  downloadTxtBtn.disabled = true;
+  const url = URL.createObjectURL(file);
+  if (isVideo) { videoPreview.src = url; videoPreview.style.display = 'block'; }
+  else { videoPreview.style.display = 'none'; }
+  if (file.size > 25 * 1024 * 1024) {
+    showError(`⚠️ Dosya ${fmt(file.size)} boyutunda. Whisper API 25 MB üzeri dosyaları reddedebilir. Büyük dosyalar otomatik olarak parçalanacak.`);
+  }
+}
+
+dropZone.addEventListener('click', (e) => { if (e.target !== fileInput) fileInput.click(); });
+fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
+
+removeBtn.addEventListener('click', () => {
+  if (abortController) abortController.abort();
+  currentFile = null;
+  fileCard.style.display = 'none';
+  videoPreview.style.display = 'none';
+  transcribeBtn.disabled = true;
+  downloadBtn.disabled = true;
+  downloadTxtBtn.disabled = true;
+  finalText = '';
+  transcriptEl.value = '';
+  panel.style.display = 'none';
+  statsGrid.style.display = 'none';
+  progressWrap.style.display = 'none';
+  isRunning = false;
+});
+
+// ── Groq Whisper API çağrısı ──────────────────────────────────────
+// Groq: whisper-large-v3 — ücretsiz, hızlı, 25 MB limit
+const WHISPER_MAX_BYTES = 24 * 1024 * 1024; // 24 MB güvenli sınır
+
+async function transcribeBlob(blob, apiKey, lang, chunkIndex, totalChunks) {
+  const label = totalChunks > 1 ? `Parça ${chunkIndex+1}/${totalChunks} Groq'a gönderiliyor…` : 'Groq Whisper\'a gönderiliyor…';
+  const pct = totalChunks > 1 ? 20 + (chunkIndex / totalChunks) * 70 : 30;
+  setProgress(pct, label);
+
+  const formData = new FormData();
+  // Groq WAV veya MP3 formatını kabul eder
+  const ext = blob.type === 'audio/wav' ? 'audio.wav' : 'audio.mp3';
+  formData.append('file', blob, ext);
+  formData.append('model', 'whisper-large-v3');
+  formData.append('response_format', 'text');
+  const langCode = lang.split('-')[0]; // "tr-TR" → "tr"
+  formData.append('language', langCode);
+
+  const resp = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + apiKey },
+    body: formData,
+    signal: abortController.signal
+  });
+
+  if (!resp.ok) {
+    const err = await resp.text();
+    let msg = `Groq API hatası (${resp.status})`;
+    try {
+      const j = JSON.parse(err);
+      msg = j.error?.message || msg;
+    } catch(e) {}
+    throw new Error(msg);
+  }
+  return await resp.text();
+}
+
+// AudioBuffer → WAV Blob (parça için)
+function audioBufferToWavBlob(buffer, startSec, endSec) {
+  const sampleRate = buffer.sampleRate;
+  const numChannels = Math.min(buffer.numberOfChannels, 2);
+  const start = Math.floor(startSec * sampleRate);
+  const end = Math.min(Math.floor(endSec * sampleRate), buffer.length);
+  const frameCount = end - start;
+
+  const wavBuffer = new ArrayBuffer(44 + frameCount * numChannels * 2);
+  const view = new DataView(wavBuffer);
+  function writeString(offset, s) { for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i)); }
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + frameCount * numChannels * 2, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * numChannels * 2, true);
+  view.setUint16(32, numChannels * 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, 'data');
+  view.setUint32(40, frameCount * numChannels * 2, true);
+  let offset = 44;
+  for (let i = 0; i < frameCount; i++) {
+    for (let ch = 0; ch < numChannels; ch++) {
+      const sample = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[start + i]));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+      offset += 2;
+    }
+  }
+  return new Blob([wavBuffer], { type: 'audio/wav' });
+}
+
+transcribeBtn.addEventListener('click', async () => {
+  if (!currentFile || isRunning) return;
+  const apiKey = (apiKeyInput.value || localStorage.getItem('groq_whisper_key') || '').trim();
+  if (!apiKey || apiKey.length < 10) {
+    showError('Lütfen geçerli bir Groq API anahtarı girin. console.groq.com adresinden ücretsiz alabilirsiniz.');
+    return;
+  }
+
+  isRunning = true;
+  abortController = new AbortController();
+  finalText = '';
+  transcriptEl.value = '';
+  transcribeBtn.style.display = 'none';
+  stopBtn.style.display = 'inline-flex';
+  stopBtn.disabled = false;
+  progressWrap.style.display = 'block';
+  panel.style.display = 'block';
+  liveDotWrap.innerHTML = '<span class="live-dot"></span>';
+  setProgress(5, 'Dosya okunuyor…');
+
+  try {
+    const lang = document.getElementById('langSelect').value;
+
+    if (currentFile.size <= WHISPER_MAX_BYTES) {
+      // ── Küçük dosya: doğrudan gönder ──────────────────────────
+      setProgress(20, 'API\'ye gönderiliyor…');
+      const text = await transcribeBlob(currentFile, apiKey, lang, 0, 1);
+      finalText = text;
+      setProgress(95, 'Tamamlanıyor…');
+    } else {
+      // ── Büyük dosya: AudioContext ile parçala ──────────────────
+      setProgress(8, 'Ses decode ediliyor…');
+      const arrayBuf = await currentFile.arrayBuffer();
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuf);
+      audioCtx.close();
+      videoDuration = audioBuffer.duration;
+
+      // Her parça kaç saniyelik olsun? WAV = 2 byte * ch * sampleRate * sec
+      // 24 MB / (2 * 2 * 44100) ≈ 136 sn, güvenli olarak 120 sn kullanalım
+      const chunkSec = 120;
+      const totalChunks = Math.ceil(audioBuffer.duration / chunkSec);
+      const parts = [];
+
+      for (let i = 0; i < totalChunks; i++) {
+        if (!isRunning) break;
+        const start = i * chunkSec;
+        const end = Math.min((i + 1) * chunkSec, audioBuffer.duration);
+        setProgress(10 + (i / totalChunks) * 10, `Parça ${i+1}/${totalChunks} hazırlanıyor…`);
+        const blob = audioBufferToWavBlob(audioBuffer, start, end);
+        const text = await transcribeBlob(blob, apiKey, lang, i, totalChunks);
+        parts.push(text.trim());
+        // Ara sonucu göster
+        transcriptEl.value = parts.join(' ');
+        updateStats(transcriptEl.value);
+      }
+      finalText = parts.join(' ');
+      setProgress(95, 'Tamamlanıyor…');
+    }
+
+    if (isRunning) {
+      // konuşmacı modu açıksa Claude ile ayır
+      const doSpeaker = speakerModeChk.checked;
+
+      if (doSpeaker) {
+        const diarized = await diarizeWithGroq(finalText, apiKey, document.getElementById('speakerCount').value);
+        finalText = diarized;
+        renderSpeakerTranscript(diarized);
+        transcriptEl.value = diarized;
+      } else {
+        transcriptEl.style.display = 'block';
+        transcriptFormatted.style.display = 'none';
+        transcriptEl.value = finalText.trim();
+      }
+
+      updateStats(finalText.trim());
+      downloadBtn.disabled = !finalText.trim();
+      downloadTxtBtn.disabled = !finalText.trim();
+      setProgress(100, 'Tamamlandı! ✓');
+      liveDotWrap.innerHTML = '';
+      setTimeout(() => { progressWrap.style.display = 'none'; }, 3000);
+    }
+  } catch(err) {
+    if (err.name === 'AbortError') {
+      setProgress(0, 'İptal edildi.');
+    } else {
+      showError('Hata: ' + err.message);
+    }
+  } finally {
+    isRunning = false;
+    transcribeBtn.style.display = 'inline-flex';
+    transcribeBtn.disabled = false;
+    stopBtn.style.display = 'none';
+  }
+});
+
+stopBtn.addEventListener('click', () => {
+  isRunning = false;
+  if (abortController) abortController.abort();
+  liveDotWrap.innerHTML = '';
+  setProgress(0, 'Durduruldu.');
+  transcribeBtn.style.display = 'inline-flex';
+  transcribeBtn.disabled = false;
+  stopBtn.style.display = 'none';
+  if (finalText.trim()) {
+    transcriptEl.value = finalText.trim();
+    updateStats(finalText.trim());
+    downloadBtn.disabled = false;
+    downloadTxtBtn.disabled = false;
+  }
+  setTimeout(() => { progressWrap.style.display = 'none'; }, 2000);
+});
+
+copyBtn.addEventListener('click', () => {
+  const text = transcriptEl.value;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    copyBtn.title = 'Kopyalandı!';
+    setTimeout(() => copyBtn.title = 'Kopyala', 2000);
+  });
+});
+
+clearBtn.addEventListener('click', () => {
+  finalText = '';
+  transcriptEl.value = '';
+  transcriptEl.style.display = 'block';
+  transcriptFormatted.innerHTML = '';
+  transcriptFormatted.style.display = 'none';
+  updateStats('');
+  downloadBtn.disabled = true;
+  downloadTxtBtn.disabled = true;
+  statsGrid.style.display = 'none';
+});
+
+transcriptEl.addEventListener('input', () => {
+  updateStats(transcriptEl.value);
+  downloadBtn.disabled = !transcriptEl.value.trim();
+  downloadTxtBtn.disabled = !transcriptEl.value.trim();
+});
+
+// Word download
+downloadBtn.addEventListener('click', () => {
+  const text = transcriptEl.value.trim();
+  if (!text) return;
+  const fn = currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'transkript';
+  const now = new Date().toLocaleString('tr-TR');
+  const paragraphs = text.split(/\n+/).filter(Boolean);
+  const wordXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?mso-application progid="Word.Document"?>
+<w:wordDocument xmlns:w="http://schemas.microsoft.com/office/word/2003/wordml"
+  xmlns:wx="http://schemas.microsoft.com/office/word/2003/auxHint">
+  <w:styles>
+    <w:style w:type="paragraph" w:styleId="Baslik">
+      <w:name w:val="heading 1"/>
+      <w:rPr>
+        <w:b/>
+        <w:sz w:val="36"/>
+        <w:color w:val="2B2B6B"/>
+      </w:rPr>
+    </w:style>
+  </w:styles>
+  <w:body>
+    <w:p>
+      <w:pPr><w:pStyle w:val="Baslik"/></w:pPr>
+      <w:r><w:t>Transkript — ${fn.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:r>
+        <w:rPr><w:color w:val="888888"/><w:sz w:val="20"/></w:rPr>
+        <w:t>Oluşturulma: ${now} · Kelime sayısı: ${wc.textContent}</w:t>
+      </w:r>
+    </w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>
+    ${paragraphs.map(p => `<w:p><w:r><w:t>${p.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</w:t></w:r></w:p>`).join('\n    ')}
+  </w:body>
+</w:wordDocument>`;
+  const blob = new Blob([wordXml], { type: 'application/msword' });
+  const url2 = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url2; a.download = fn + '_transkript.doc'; a.click();
+  URL.revokeObjectURL(url2);
+});
+
+// TXT download
+downloadTxtBtn.addEventListener('click', () => {
+  const text = transcriptEl.value.trim();
+  if (!text) return;
+  const fn = currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'transkript';
+  const header = `TRANSKRİPT\n${'='.repeat(50)}\nDosya: ${fn}\nTarih: ${new Date().toLocaleString('tr-TR')}\nKelime: ${wc.textContent}\n${'='.repeat(50)}\n\n`;
+  const blob = new Blob([header + text], { type: 'text/plain;charset=utf-8' });
+  const url2 = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url2; a.download = fn + '_transkript.txt'; a.click();
+  URL.revokeObjectURL(url2);
+});
+</script>
+</body>
+</html>
